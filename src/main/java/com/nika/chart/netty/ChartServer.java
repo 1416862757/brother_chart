@@ -12,17 +12,14 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 /**
  * @Date 16:56 2019/10/17
  * @Author Nika
  */
-@Component
 public class ChartServer {
-    @Value("$netty.port")
-    private Integer port;
+
+    private final int port;
 
     private static Logger logger = LoggerFactory.getLogger(ChartServer.class);
 
@@ -33,6 +30,10 @@ public class ChartServer {
     private final EventLoopGroup workerGroup = new NioEventLoopGroup();
 
     private Channel channel;
+
+    public ChartServer(int port) {
+        this.port = port;
+    }
 
     public ChannelFuture start() throws InterruptedException {
         EventLoopGroup bossGroup = new NioEventLoopGroup();

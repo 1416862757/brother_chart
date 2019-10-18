@@ -5,6 +5,7 @@ import io.netty.channel.ChannelFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,6 +15,10 @@ import org.springframework.core.annotation.Order;
 @SpringBootApplication
 public class ChartApplication implements CommandLineRunner {
     private static Logger logger = LoggerFactory.getLogger(ChartApplication.class);
+
+    @Value("${netty.port}")
+    private Integer port;
+
     @Autowired
     private ChartServer chartServer;
 
@@ -24,12 +29,12 @@ public class ChartApplication implements CommandLineRunner {
 
     @Bean
     public ChartServer chartServer(){
-        return new ChartServer();
+        return new ChartServer(port);
     }
 
     @Override
     public void run(String... args) throws Exception {
-        ChannelFuture future = new ChartServer().start();
+        ChannelFuture future = new ChartServer(port).start();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("【系统消息】：ChartServer 开始注销！");
             try {

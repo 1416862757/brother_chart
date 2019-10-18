@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>聊天页面</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script th:src="@{/js/jquery-1.10.2.min.js}"></script>
+</head>
+<script type="text/javascript">
+    var socket;
+    if (!window.WebSocket) {
+        window.WebSocket = window.MozWebSocket;
+    }
+    if (window.WebSocket) {
+        socket = new WebSocket("ws://localhost:8899/ws");
+        socket.onmessage = function (event) {
+            var ta = document.getElementById('responseText');
+
+            ta.value += event.data
+        };
+        socket.onopen = function (event) {
+            var ta = document.getElementById('responseText');
+            ta.value = "打开WebSocket服务正常，浏览器支持WebSocket!\r\n";
+        };
+        socket.onclose = function (event) {
+            var ta = document.getElementById('responseText');
+            ta.value = "";
+            ta.value = "WebSocket 关闭!";
+        };
+
+    } else {
+        alert("抱歉，您的浏览器不支持WebSocket协议!");
+    }
+
+    function reconnect() {
+        socket = new WebSocket("ws://localhost:8899/ws");
+
+        socket.onopen = function (event) {
+            var ta = document.getElementById('responseText');
+            ta.value = "打开WebSocket服务正常，浏览器支持WebSocket!\r\n";
+        };
+        socket.onmessage = function (event) {
+            var ta = document.getElementById('responseText');
+
+            ta.value += event.data
+        };
+        socket.onclose = function (event) {
+            var ta = document.getElementById('responseText');
+            ta.value = "";
+            ta.value = "WebSocket 关闭!";
+        };
+    }
+
+    function send(message) {
+        if (!window.WebSocket) {
+            return;
+        }
+        if (socket.readyState !== WebSocket.OPEN) {
+            reconnect();
+        }
+        socket.send(message);
+    }
+</script>
+<body>
+
+
+<form οnsubmit="return false;">
+    <input type="text" name="message" value="Netty学习实践"/>
+    <br><br>
+    <input type="button" value="发送WebSocket请求消息" onclick="send(this.form.message.value)"/>
+    <hr color="blue"/>
+    <h3>服务端返回的应答消息</h3>
+    <textarea id="responseText" style="width:500px;height:300px;"></textarea>
+</form>
+
+
+</body>
+</html>

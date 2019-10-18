@@ -1,9 +1,11 @@
 package com.nika.chart.netty;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
 /**
@@ -18,11 +20,54 @@ import io.netty.util.concurrent.GlobalEventExecutor;
  * @Date 0:12 2019/10/18
  * @Author Nika
  */
-public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSocketFrameHandler> {
+public class TextWebSocketFrameHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
     public static ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, TextWebSocketFrameHandler textWebSocketFrameHandler) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
+        Channel incoming = ctx.channel();
+        for (Channel channel : channels) {
+            if (channel != incoming) {
+                channel.writeAndFlush(new TextWebSocketFrame("[" + incoming.remoteAddress() + "]" + msg.text() + "\r\n"));
+            } else {
+                channel.writeAndFlush(new TextWebSocketFrame("[you]" + msg.text() + "\r\n"));
+            }
+        }
+    }
 
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        Channel incoming = ctx.channel();
+        channels.writeAndFlush(new TextWebSocketFrame("SERVER - " + incoming.remoteAddress() + "加入\r\n"));
+
+        channels.add(incoming);
+        System.out.println("Client：" + incoming.remoteAddress() + "加入\r\n");
+    }
+
+    @Override
+    public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+        Channel incoming = ctx.channel();
+        channels.writeAndFlush(new TextWebSocketFrame("SERVER - " + incoming.remoteAddress() + "离开\r\n"));
+        System.out.println("Client：" + incoming.remoteAddress() + "离开\r\n");
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        Channel incoming = ctx.channel();
+        System.out.println("Client：" + incoming.remoteAddress() + "在线\r\n");
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        Channel incoming = ctx.channel();
+        System.out.println("Client：" + incoming.remoteAddress() + "掉线\r\n");
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        Channel incoming = ctx.channel();
+        System.out.println("Client：" + incoming.remoteAddress() + "异常\r\n");
+        cause.printStackTrace();
+        ctx.close();
     }
 }
